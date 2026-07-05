@@ -1,0 +1,8 @@
+All necessary Python packages such as NumPy, Pandas, TensorFlow, and others were installed 
+using pip commands.  
+Example:  
+pip install numpy  
+pip install pandas 
+pip install flask  
+pip install keras  
+pip install sklearn
