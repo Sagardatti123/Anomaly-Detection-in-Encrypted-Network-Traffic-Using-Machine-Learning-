@@ -1,0 +1,45 @@
+import numpy as np import pandas as pd import joblib from 
+flask import Flask, render_template, request, jsonify from 
+tensorflow.keras.models import load_model app = 
+Flask(__name__) autoencoder =
+load_model("autoencoder_model.h5", compile=False) scaler 
+= joblib.load("scaler.pkl") iso = 
+joblib.load("isolation_forest.pkl") feature_columns = 
+joblib.load("feature_columns.pkl") @app.route("/") def 
+home():  
+return 
+render_template("index.html")  
+@app.route("/predict", 
+methods=["POST"]) def predict():  
+file = 
+request.files["file"]     
+df = pd.read_csv(file)  
+# 1. Feature Alignment (Ensure columns match training)  
+X = df.reindex(columns=feature_columns, fill_value=0)  
+X = X.replace([np.inf, -np.inf], np.nan).fillna(0)  
+X_scaled = scaler.transform(X)     # 2. Hybrid Detection     
+reconstructed = autoencoder.predict(X_scaled, verbose=0)     
+recon_error = np.mean(np.square(X_scaled - reconstructed), 
+axis=1)  
+# Use Isolation Forest decision function     scores = 
+iso.decision_function(recon_error.reshape(-1, 1))  
+   threshold 
+= np.percentile(scores, 6) # Using your 6% threshold logic     
+df["Predicted_Attack"] = (scores < threshold).astype(int)  
+# 3. Categorization (Mapping anomalies to attack names)  
+# We look at 'attack_category' for the names     
+category_col = 
+"attack_category" if "attack_category" in df.columns else "Label"     
+detected = df[df["Predicted_Attack"] == 1]  
+# Filter out benign/normal entries from the attack count     detected = 
+detected[~detected[category_col].astype(str).isin(['0', 'Benign', 'benign'])]    
+detected.empty: 
+return jsonify({"Safe Traffic": 100})
+calculate percentages       
+counts = 
+detected[category_col].value_counts()     total = counts.sum()     
+percentages = {str(k): round((v/total)*100, 2) for k, v in 
+counts.items()}
+     return jsonify(percentages) if __name__ == 
+"__main__":  
+app.run(debug=True)  
