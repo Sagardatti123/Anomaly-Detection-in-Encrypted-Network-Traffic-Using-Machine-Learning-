@@ -195,12 +195,7 @@ python app.py
 
 ---
 
-# 👨‍💻 Authors
 
-**D. Sagar**  
-**G. Tanuja**  
-**B. Chandini**  
-**S. Sai Kiran**
 
 **Department of Computer Science & Engineering (Data Science)**  
 **MVGR College of Engineering**
